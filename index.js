@@ -1,14 +1,17 @@
+require('dotenv').config()
 const { response } = require("express");
 const express = require("express");
 const morgan = require('morgan')
 const app = express();
 
+
 app.use(express.json());
 morgan.token('reqBody', function (req, res) { return JSON.stringify(req.body)})
 app.use(morgan(':method :url :status :res[content-length] - :response-time  ms :reqBody'))
 app.use(express.static('build'))
+const Person = require('./models/person')
 
-
+/** 
 let persons = [
   {
     name: "Arto Hellas",
@@ -30,24 +33,19 @@ let persons = [
     number: "39-23-6423122",
     id: 4,
   },
-];
+];*/
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  Person.find({}).then(persons => {
+    console.log('persons found ', persons)
+    res.json(persons)
+  })
 });
 
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
-
-  if (person) {
-    console.log(req.params, id, person);
-    res.json(person);
-  } else {
-    return res.status(404).json({
-      error: "not found"
-    });
-  }
+  Person.findById(req.params.id).then(person => {
+    res.json(person)
+  })
 });
 app.post("/api/persons", (req, res) => {
     const body = req.body
@@ -58,21 +56,22 @@ app.post("/api/persons", (req, res) => {
           });
     }
 
-    if (persons.some(person => person.name === body.name)) {
+    /*if (persons.some(person => person.name === body.name)) {
         return res.status(406).json({
             error: "name must be unique"
           });
-    }
+    }*/
 
-    const initialPerson = {
+    const newPerson = new Person({
         name: body.name,
         number: body.number
-    }
+    })
 
-    const newPerson = {...initialPerson, id: Math.floor(Math.random() * 9000000) }
+    //const newPerson = {...initialPerson, id: Math.floor(Math.random() * 9000000) }
 
-    persons.push(newPerson)
-    res.json(`${newPerson.name} was succesfully added`);
+    newPerson.save().then(result => {
+      res.json(`${newPerson.name} was succesfully added`);
+    })
    
   });
 
