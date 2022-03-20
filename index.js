@@ -105,18 +105,23 @@ app.delete("/api/persons/:id", (req, res, next) => {
     .catch(error => next(error))
 });
 
-app.get("/info", (req, res) => {
-  const timestamp = new Date();
-  const infoElement = `<p>Phonebook has info for ${persons.length} people</p><p>${timestamp}</p>`;
-  res.send(infoElement);
+app.get("/info", (req, res, next) => {
+  Person.find({}).then(persons => {
+    const timestamp = new Date();
+    const infoElement = `<p>Phonebook has info for ${persons.length} people</p><p>${timestamp}</p>`;
+    res.send(infoElement);
+  })
+  .catch(error => next(error))
+  
 });
 
 const errorHandler = (error, req, res, next) => {
   console.error('error handler encountered error: ', error.message)
   if (error.name === 'CastError') {
     return res.status(400).send({ error: 'malformatted id' })
+  } else {
+    return res.status(400).send({ error: 'bad request'})
   }
-  next(error)
 }
 
 app.use(errorHandler)
